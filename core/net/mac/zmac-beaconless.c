@@ -90,14 +90,15 @@ send_packet(mac_callback_t sent, void *ptr)
 		}
 		// Backoff & Channel check - if channel busy then reschedule
 		PRINTF("ZMAC Backing off since not owner of slot\n");
-		backoff_delay = random_rand() % CLOCK_SECOND;
+		backoff_delay = random_rand() % BACKOFF_MAX;
 		ctimer_set(&slot_timer, backoff_delay, _zmac_csma, &p);
-	}
-
-	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-		PRINTF("TIMER No more time to transmit\n");
 	} else {
-		NETSTACK_RDC.send(sent, ptr);
+		if(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+			PRINTF("TIMER No more time to transmit\n");
+		} else {
+			PRINTF("TIMER Inside slot: %lu == [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
+			NETSTACK_RDC.send(sent, ptr);
+		}
 	}
 }
 /*---------------------------------------------------------------------------*/
