@@ -42,8 +42,8 @@
 #include <stdio.h>
 
 /*---------------------------------------------------------------------------*/
-PROCESS(example_unicast_process, "Example unicast");
-AUTOSTART_PROCESSES(&example_unicast_process);
+PROCESS(mac_star, "MAC with star topology");
+AUTOSTART_PROCESSES(&mac_star);
 /*---------------------------------------------------------------------------*/
 static void
 recv_uc(struct unicast_conn *c, const linkaddr_t *from)
@@ -66,12 +66,13 @@ sent_uc(struct unicast_conn *c, int status, int num_tx)
 static const struct unicast_callbacks unicast_callbacks = {recv_uc, sent_uc};
 static struct unicast_conn uc;
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(example_unicast_process, ev, data)
+PROCESS_THREAD(mac_star, ev, data)
 {
   PROCESS_EXITHANDLER(unicast_close(&uc);)
     
   PROCESS_BEGIN();
 
+  printf("My rime address is %d.%d\n", linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1]);
   unicast_open(&uc, 146, &unicast_callbacks);
 
   while(1) {

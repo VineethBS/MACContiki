@@ -8,6 +8,7 @@
   <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <simulation>
     <title>MAC</title>
+    <speedlimit>0.1</speedlimit>
     <randomseed>123456</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
@@ -155,7 +156,7 @@
   <plugin>
     org.contikios.cooja.plugins.SimControl
     <width>280</width>
-    <z>1</z>
+    <z>0</z>
     <height>160</height>
     <location_x>400</location_x>
     <location_y>0</location_y>
@@ -171,7 +172,7 @@
       <viewport>3.5272727272727273 0.0 0.0 3.5272727272727273 17.636363636363637 -3.363636363636333</viewport>
     </plugin_config>
     <width>400</width>
-    <z>2</z>
+    <z>3</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -184,7 +185,7 @@
       <coloring />
     </plugin_config>
     <width>766</width>
-    <z>0</z>
+    <z>2</z>
     <height>240</height>
     <location_x>400</location_x>
     <location_y>160</location_y>
@@ -201,10 +202,10 @@
       <showRadioRXTX />
       <showRadioHW />
       <showLEDs />
-      <zoomfactor>500.0</zoomfactor>
+      <zoomfactor>100.0</zoomfactor>
     </plugin_config>
     <width>1166</width>
-    <z>4</z>
+    <z>1</z>
     <height>166</height>
     <location_x>0</location_x>
     <location_y>533</location_y>
@@ -216,7 +217,7 @@
       <decorations>true</decorations>
     </plugin_config>
     <width>486</width>
-    <z>3</z>
+    <z>4</z>
     <height>160</height>
     <location_x>680</location_x>
     <location_y>0</location_y>
