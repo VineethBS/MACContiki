@@ -1,6 +1,6 @@
 /**
  * \file
- *         Simple-ALOHA implementation (header file)
+ *         Simple-ALOHA implementation
  * \author
  *         Vineeth B. S. <vineethbs@gmail.com>
  */
@@ -12,13 +12,46 @@
 #include "net/packetbuf.h"
 #include "net/netstack.h"
 
+#include "sys/ctimer.h"
+#include "sys/clock.h"
+
+#include "lib/random.h"
+
+#define DEBUG 1
+#if DEBUG
+#include <stdio.h>
+#define PRINTF(...) printf(__VA_ARGS__)
+#else /* DEBUG */
+#define PRINTF(...)
+#endif /* DEBUG */
+
 /*---------------------------------------------------------------------------*/
+static struct ctimer transmit_timer;
+
+static struct send_packet_data {
+	mac_callback_t sent;
+	void *ptr;
+};
+
+static struct send_packet_data p;
+
+static void
+_send_packet(void *ptr)
+{
+	struct send_packet_data *d = ptr;
+	NETSTACK_RDC.send(d->sent, d->ptr);
+}
+
 static void
 send_packet(mac_callback_t sent, void *ptr)
 {
-
-	NETSTACK_RDC.send(sent, ptr);
+	p.sent = sent;
+	p.ptr = ptr;
+	clock_time_t delay = random_rand() % CLOCK_SECOND;
+	PRINTF("Simple-ALOHA : scheduling transmission in %u ticks\n", (unsigned) delay);
+	ctimer_set(&transmit_timer, delay, _send_packet, &p);
 }
+
 /*---------------------------------------------------------------------------*/
 static void
 packet_input(void)
