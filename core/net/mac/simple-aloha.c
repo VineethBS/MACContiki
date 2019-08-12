@@ -5,7 +5,7 @@
  *         Vineeth B. S. <vineethbs@gmail.com>
  */
 
-#include "net/mac/nullmac.h"
+#include "net/mac/simple-aloha.h"
 #include "net/netstack.h"
 #include "net/ip/uip.h"
 #include "net/ip/tcpip.h"
@@ -38,6 +38,7 @@ static struct send_packet_data p;
 static void
 _send_packet(void *ptr)
 {
+	PRINTF("Simple-ALOHA : transmitting at %u\n", (unsigned) clock_time());
 	struct send_packet_data *d = ptr;
 	NETSTACK_RDC.send(d->sent, d->ptr);
 }
@@ -48,8 +49,9 @@ send_packet(mac_callback_t sent, void *ptr)
 	p.sent = sent;
 	p.ptr = ptr;
 	clock_time_t delay = random_rand() % CLOCK_SECOND;
-	PRINTF("Simple-ALOHA : scheduling transmission in %u ticks\n", (unsigned) delay);
+	PRINTF("Simple-ALOHA : at %u scheduling transmission in %u ticks\n", (unsigned) clock_time(),(unsigned) delay);
 	ctimer_set(&transmit_timer, delay, _send_packet, &p);
+	sent(ptr, MAC_TX_DEFERRED, 1);
 }
 
 /*---------------------------------------------------------------------------*/

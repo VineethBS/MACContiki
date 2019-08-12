@@ -79,7 +79,7 @@ PROCESS_THREAD(mac_star, ev, data)
     static struct etimer et;
     linkaddr_t addr;
     
-    etimer_set(&et, CLOCK_SECOND/10);
+    etimer_set(&et, CLOCK_SECOND);
     
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
