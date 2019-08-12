@@ -5,31 +5,40 @@
  *         Vineeth B. S. <vineethbs@gmail.com>
  */
 
+#include "net/rime/rime.h"
 #include "net/mac/nullmac.h"
 #include "net/netstack.h"
 #include "net/ip/uip.h"
 #include "net/ip/tcpip.h"
 #include "net/packetbuf.h"
 #include "net/netstack.h"
-#include "sys/rtimer.h"
+#include "sys/ctimer.h"
+#include "sys/clock.h"
+
+
+#define DEBUG 1
+#if DEBUG
+#include <stdio.h>
+#define PRINTF(...) printf(__VA_ARGS__)
+#else /* DEBUG */
+#define PRINTF(...)
+#endif /* DEBUG */
 
 /* TDMA configuration */
-#define NR_SLOTS 3
-#define SLOT_LENGTH (RTIMER_SECOND/NR_SLOTS)
-#define GUARD_PERIOD (RTIMER_SECOND/NR_SLOTS/4)
+#define NR_SLOTS 6
+#define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
+#define GUARD_PERIOD (CLOCK_SECOND/NR_SLOTS/4)
+#define PERIOD_LENGTH CLOCK_SECOND
 
-#define MY_SLOT (node_id % NR_SLOTS)
-#define PERIOD_LENGTH RTIMER_SECOND
+#define MY_SLOT (linkaddr_node_addr.u8[0] % NR_SLOTS)
 
-static struct rtimer rtimer;
+static struct ctimer slot_timer;
 
 /*---------------------------------------------------------------------------*/
 static struct send_packet_data {
 	mac_callback_t sent;
 	void *ptr;
-};
-
-static struct send_packet_data p;
+} p;
 
 static void
 _send_packet(void *ptr)
@@ -42,13 +51,14 @@ _send_packet(void *ptr)
 static void
 send_packet(mac_callback_t sent, void *ptr)
 {
-	rtimer_clock_t now, rest, period_start, slot_start;
+	PRINTF("My slot is %u, Slot length is %lu, Period is %lu\n", MY_SLOT, SLOT_LENGTH, PERIOD_LENGTH);
+	clock_time_t now, rest, period_start, slot_start;
 
 	p.sent = sent;
 	p.ptr = ptr;
 
 	/* Calculate slot start time */
-	now = RTIMER_NOW();
+	now = CTIMER_NOW();
 	rest = now % PERIOD_LENGTH;
 	period_start = now - rest;
 	slot_start = period_start + MY_SLOT*SLOT_LENGTH;
@@ -60,14 +70,14 @@ send_packet(mac_callback_t sent, void *ptr)
 			slot_start += PERIOD_LENGTH;
 		}
 		PRINTF("TIMER Rescheduling until %u\n", slot_start);
-		r = rtimer_set(&rtimer, slot_start, 1, _send_packet, p);
+		ctimer_set(&slot_timer, slot_start, _send_packet, &p);
 	}
 
-	if(RTIMER_NOW() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
 			PRINTF("TIMER No more time to transmit\n");
-			break;
-		}
-	NETSTACK_RDC.send(sent, ptr);
+	} else {
+		NETSTACK_RDC.send(sent, ptr);
+	}
 }
 /*---------------------------------------------------------------------------*/
 static void
