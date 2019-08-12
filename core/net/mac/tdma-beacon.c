@@ -6,9 +6,6 @@
  *         Vineeth B. S. <vineethbs@gmail.com>
  */
 
-// Beacons are assumed to have the highest priority, they are sent without any heed to
-// other transmissions
-
 #include "net/rime/rime.h"
 #include "net/mac/nullmac.h"
 #include "net/netstack.h"
@@ -19,6 +16,7 @@
 #include "sys/ctimer.h"
 #include "sys/clock.h"
 
+#include <string.h>
 
 #define DEBUG 1
 #if DEBUG
@@ -29,24 +27,33 @@
 #endif /* DEBUG */
 
 /*---------------------------------------------------------------------------*/
-/* TDMA beacon generation */
+/* TDMA beacon generation for the COORDINATOR NODE */
 #define COORDINATOR_NODE 1
 #define BEACON_PERIOD 10 * CLOCK_SECOND
 #define BEACON_NODE (linkaddr_node_addr.u8[0] == COORDINATOR_NODE)
 
 static void beacon_broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from) {};
-static const struct broadcast_callbacks beacon_broadcast_call = {broadcast_recv};
+static const struct broadcast_callbacks beacon_broadcast_call = {beacon_broadcast_recv};
 static struct broadcast_conn beacon_broadcast;
 static struct ctimer beacon_timer;
 // Beacon sending is assumed to have the highest priority
 
 static void _send_beacon()
 {
-	packetbuf_copyfrom("TDMABeacon",10);
+	packetbuf_copyfrom("TDMABeacon", 10);
+	PRINTF("Beacon sent at %lu\n", clock_time());
 	broadcast_send(&beacon_broadcast);
+	clock_time_t next_beacon_time = clock_time() + BEACON_PERIOD;
+	ctimer_set(&beacon_timer, next_beacon_time, _send_beacon, NULL);
 }
 /*---------------------------------------------------------------------------*/
 
+/* TDMA beacon reception and synchronization for the non-COORDINATOR nodes */
+#define BEACON_NOT_RECEIVED 0
+#define BEACON_RECEIVED 1
+
+static unsigned beacon_received_flag;
+clock_time_t last_beacon_receive_time;
 
 /* TDMA configuration */
 #define NR_SLOTS 6
@@ -67,7 +74,7 @@ static struct send_packet_data {
 static void
 _send_packet(void *ptr)
 {
-	PRINTF("Beaconless TDMA : transmitting at %u\n", (unsigned) clock_time());
+	PRINTF("Beaconed TDMA : transmitting at %u\n", (unsigned) clock_time());
 	struct send_packet_data *d = ptr;
 	NETSTACK_RDC.send(d->sent, d->ptr);
 }
@@ -75,44 +82,51 @@ _send_packet(void *ptr)
 static void
 send_packet(mac_callback_t sent, void *ptr)
 {
-	if (BEACON_NODE) {
-		NETSTACK_RDC.send(sent, ptr);
-	} else {
-		PRINTF("My slot is %u, Slot length is %lu, Period is %lu\n", MY_SLOT, SLOT_LENGTH, PERIOD_LENGTH);
-		clock_time_t now, rest, period_start, slot_start;
+	clock_time_t now, rest, period_start, slot_start;
+	int num_periods;
 
-		p.sent = sent;
-		p.ptr = ptr;
+	p.sent = sent;
+	p.ptr = ptr;
 
-		/* Calculate slot start time */
-		now = clock_time();
+	/* Calculate slot start time */
+	now = clock_time();
+	if (beacon_received_flag == BEACON_NOT_RECEIVED) {
 		rest = now % PERIOD_LENGTH;
-		period_start = now - rest;
-		slot_start = period_start + MY_SLOT*SLOT_LENGTH;
-		PRINTF("%lu,%lu,%lu,%lu\n",now,rest,period_start,slot_start);
+	} else {
+		rest = (now - last_beacon_receive_time) % PERIOD_LENGTH;
+	}
+	period_start = now - rest;
+	slot_start = period_start + MY_SLOT*SLOT_LENGTH;
+	PRINTF("%lu,%lu,%lu,%lu\n",now,rest,period_start,slot_start);
 
-		/* Check if we are inside our slot */
-		if(now < slot_start || now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			PRINTF("TIMER We are outside our slot: %lu != [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
-			while(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-				slot_start += PERIOD_LENGTH;
-			}
-			PRINTF("TIMER Rescheduling until %lu\n", slot_start);
-			ctimer_set(&slot_timer, slot_start, _send_packet, &p);
+	/* Check if we are inside our slot */
+	if(now < slot_start || now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+		PRINTF("TIMER We are outside our slot: %lu != [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
+		while(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+			slot_start += PERIOD_LENGTH;
 		}
+		PRINTF("TIMER Rescheduling until %lu\n", slot_start);
+		ctimer_set(&slot_timer, slot_start, _send_packet, &p);
+	}
 
-		if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			PRINTF("TIMER No more time to transmit\n");
-		} else {
-			NETSTACK_RDC.send(sent, ptr);
-		}
+	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+		PRINTF("TIMER No more time to transmit\n");
+	} else {
+		NETSTACK_RDC.send(sent, ptr);
 	}
 }
 /*---------------------------------------------------------------------------*/
 static void
 packet_input(void)
 {
-	NETSTACK_LLSEC.input();
+	if (packetbuf_holds_broadcast() &&
+			strcmp(packetbuf_dataptr, "TDMABeacon")) {
+		beacon_received_flag = BEACON_RECEIVED;
+		last_beacon_receive_time = clock_time();
+		PRINTF("TDMA Beacon: Received TDMA Beacon, setting receive time to %lu\n", last_beacon_receive_time);
+	} else {
+		NETSTACK_LLSEC.input();
+	}
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -136,8 +150,13 @@ channel_check_interval(void)
 static void
 init(void)
 {
+	beacon_received_flag = BEACON_NOT_RECEIVED;
+
 	if (BEACON_NODE) {
+		PRINTF("Initializing beacon sending at co-ordinator node");
 		broadcast_open(&beacon_broadcast, 129, &beacon_broadcast_call);
+		clock_time_t next_beacon_time = clock_time() + BEACON_PERIOD;
+		ctimer_set(&beacon_timer, next_beacon_time, _send_beacon, NULL);
 		_send_beacon();
 	}
 }

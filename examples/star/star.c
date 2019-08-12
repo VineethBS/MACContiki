@@ -83,7 +83,7 @@ PROCESS_THREAD(mac_star, ev, data)
     
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    packetbuf_copyfrom("Hello", 5);
+    packetbuf_copyfrom("01234567890123456789012345678901234567890123456789", 50);
     addr.u8[0] = 1;
     addr.u8[1] = 0;
     if(!linkaddr_cmp(&addr, &linkaddr_node_addr)) {
