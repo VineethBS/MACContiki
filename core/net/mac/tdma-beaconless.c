@@ -1,6 +1,7 @@
 /**
  * \file
  *         Beaconless TDMA implementation
+ *         Modification of TDMA code in Contiki 2.2 by Adam Dunkels
  * \author
  *         Vineeth B. S. <vineethbs@gmail.com>
  */
@@ -58,18 +59,19 @@ send_packet(mac_callback_t sent, void *ptr)
 	p.ptr = ptr;
 
 	/* Calculate slot start time */
-	now = CTIMER_NOW();
+	now = clock_time();
 	rest = now % PERIOD_LENGTH;
 	period_start = now - rest;
 	slot_start = period_start + MY_SLOT*SLOT_LENGTH;
+	PRINTF("%lu,%lu,%lu,%lu\n",now,rest,period_start,slot_start);
 
 	/* Check if we are inside our slot */
 	if(now < slot_start || now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-		PRINTF("TIMER We are outside our slot: %u != [%u,%u]\n", now, slot_start, slot_start + SLOT_LENGTH);
+		PRINTF("TIMER We are outside our slot: %lu != [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
 		while(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
 			slot_start += PERIOD_LENGTH;
 		}
-		PRINTF("TIMER Rescheduling until %u\n", slot_start);
+		PRINTF("TIMER Rescheduling until %lu\n", slot_start);
 		ctimer_set(&slot_timer, slot_start, _send_packet, &p);
 	}
 
