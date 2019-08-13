@@ -72,13 +72,15 @@ send_packet(mac_callback_t sent, void *ptr)
 			slot_start += PERIOD_LENGTH;
 		}
 		PRINTF("TIMER Rescheduling until %lu\n", slot_start);
-		ctimer_set(&slot_timer, slot_start, _send_packet, &p);
-	}
-
-	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			PRINTF("TIMER No more time to transmit\n");
+		ctimer_set(&slot_timer, slot_start - clock_time(), _send_packet, &p);
 	} else {
-		NETSTACK_RDC.send(sent, ptr);
+		if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+			PRINTF("TIMER No more time to transmit\n");
+			slot_start += PERIOD_LENGTH;
+			ctimer_set(&slot_timer, slot_start - clock_time(), _send_packet, &p);
+		} else {
+			NETSTACK_RDC.send(sent, ptr);
+		}
 	}
 }
 /*---------------------------------------------------------------------------*/
