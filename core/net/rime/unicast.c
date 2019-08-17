@@ -113,6 +113,7 @@ unicast_close(struct unicast_conn *c)
 int
 unicast_send(struct unicast_conn *c, const linkaddr_t *receiver)
 {
+	PRINTF("Unicast Here");
   PRINTF("%d.%d: unicast_send to %d.%d\n",
 	 linkaddr_node_addr.u8[0],linkaddr_node_addr.u8[1],
 	 receiver->u8[0], receiver->u8[1]);

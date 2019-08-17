@@ -56,6 +56,8 @@ static void _send_beacon()
 static unsigned beacon_received_flag;
 clock_time_t last_beacon_receive_time;
 
+linkaddr_t beacon_node;
+
 /* TDMA configuration */
 #define NR_SLOTS 16
 #define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
@@ -131,12 +133,15 @@ send_packet(mac_callback_t sent, void *ptr)
 static void
 packet_input(void)
 {
-	if (packetbuf_holds_broadcast() &&
-			strcmp(packetbuf_dataptr, "TDMABeacon")) {
+	if ((packetbuf_holds_broadcast() && strcmp((char *) packetbuf_dataptr, "TDMABeacon")) &&
+			linkaddr_cmp(&beacon_node, packetbuf_addr(PACKETBUF_ADDR_SENDER)))
+
+	{
 		beacon_received_flag = BEACON_RECEIVED;
 		last_beacon_receive_time = clock_time();
 		PRINTF("TDMA Beacon: Received TDMA Beacon, setting receive time to %lu\n", last_beacon_receive_time);
 	} else {
+		PRINTF("Sending to LLSEC\n");
 		NETSTACK_LLSEC.input();
 	}
 }
@@ -162,6 +167,9 @@ channel_check_interval(void)
 static void
 init(void)
 {
+	beacon_node.u8[0] = 1;
+	beacon_node.u8[1] = 0;
+
 	PRINTF("Slot length %lu, Period length %lu\n", SLOT_LENGTH, PERIOD_LENGTH);
 	beacon_received_flag = BEACON_NOT_RECEIVED;
 

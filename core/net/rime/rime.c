@@ -169,7 +169,6 @@ packet_sent(void *ptr, int status, int num_tx)
       s->output_callback(status);
     }
   }
-
   abc_sent(c, status, num_tx);
 }
 /*---------------------------------------------------------------------------*/

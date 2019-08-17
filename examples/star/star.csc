@@ -152,186 +152,6 @@
       </interface_config>
       <motetype_identifier>sky1</motetype_identifier>
     </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>37.87633286528125</x>
-        <y>25.680473069314754</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>7</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>41.99939366682035</x>
-        <y>42.94714230930815</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>8</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>49.464965763539915</x>
-        <y>49.70765260110161</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>9</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>58.080457954976374</x>
-        <y>20.123197497773845</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>10</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>73.75328217152779</x>
-        <y>28.66028899699054</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>11</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>54.2335512416027</x>
-        <y>43.73525648878121</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>12</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>73.1235380290664</x>
-        <y>52.21440439880543</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>13</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>49.17179362870322</x>
-        <y>60.20631896581371</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>14</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>49.012170051290504</x>
-        <y>29.883882299353317</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>15</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
-    <mote>
-      <breakpoints />
-      <interface_config>
-        org.contikios.cooja.interfaces.Position
-        <x>39.71246605544495</x>
-        <y>34.91207068939799</y>
-        <z>0.0</z>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspClock
-        <deviation>1.0</deviation>
-      </interface_config>
-      <interface_config>
-        org.contikios.cooja.mspmote.interfaces.MspMoteID
-        <id>16</id>
-      </interface_config>
-      <motetype_identifier>sky1</motetype_identifier>
-    </mote>
   </simulation>
   <plugin>
     org.contikios.cooja.plugins.SimControl
@@ -360,7 +180,7 @@
   <plugin>
     org.contikios.cooja.plugins.LogListener
     <plugin_config>
-      <filter>ID:8</filter>
+      <filter>lower layer</filter>
       <formatted_time />
       <coloring />
     </plugin_config>
@@ -369,36 +189,6 @@
     <height>240</height>
     <location_x>400</location_x>
     <location_y>160</location_y>
-  </plugin>
-  <plugin>
-    org.contikios.cooja.plugins.TimeLine
-    <plugin_config>
-      <mote>0</mote>
-      <mote>1</mote>
-      <mote>2</mote>
-      <mote>3</mote>
-      <mote>4</mote>
-      <mote>5</mote>
-      <mote>6</mote>
-      <mote>7</mote>
-      <mote>8</mote>
-      <mote>9</mote>
-      <mote>10</mote>
-      <mote>11</mote>
-      <mote>12</mote>
-      <mote>13</mote>
-      <mote>14</mote>
-      <mote>15</mote>
-      <showRadioRXTX />
-      <showRadioHW />
-      <showLEDs />
-      <zoomfactor>100.0</zoomfactor>
-    </plugin_config>
-    <width>1166</width>
-    <z>0</z>
-    <height>699</height>
-    <location_x>0</location_x>
-    <location_y>0</location_y>
   </plugin>
   <plugin>
     org.contikios.cooja.plugins.Notes
@@ -411,6 +201,26 @@
     <height>160</height>
     <location_x>680</location_x>
     <location_y>0</location_y>
+  </plugin>
+  <plugin>
+    org.contikios.cooja.plugins.TimeLine
+    <plugin_config>
+      <mote>0</mote>
+      <mote>1</mote>
+      <mote>2</mote>
+      <mote>3</mote>
+      <mote>4</mote>
+      <mote>5</mote>
+      <showRadioRXTX />
+      <showRadioHW />
+      <showLEDs />
+      <zoomfactor>500.0</zoomfactor>
+    </plugin_config>
+    <width>1166</width>
+    <z>0</z>
+    <height>166</height>
+    <location_x>0</location_x>
+    <location_y>533</location_y>
   </plugin>
 </simconf>
 
