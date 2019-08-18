@@ -34,6 +34,7 @@ AUTOSTART_PROCESSES(&mac_star);
 static void
 recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
+	printf("Receive callback\n");
 	static struct payload rcv_data;
 	packetbuf_copyto(&rcv_data);
 	printf("unicast message %u received from %d.%d\n", rcv_data.packet_counter, from->u8[0], from->u8[1]);
@@ -68,13 +69,12 @@ PROCESS_THREAD(mac_star, ev, data)
 	while(1) {
 		static struct etimer et;
 		linkaddr_t addr;
-
-
 		etimer_set(&et, RATE1);
 
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 		printf("Packet counter %u\n", pkt_ctr.packet_counter);
 		packetbuf_copyfrom(&pkt_ctr, sizeof(pkt_ctr));
+		// packetbuf_copyfrom("hello", 5);
 
 		addr.u8[0] = 1;
 		addr.u8[1] = 0;

@@ -42,7 +42,7 @@
  * @{
  */
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -103,6 +103,7 @@ rime_sniffer_remove(struct rime_sniffer *s)
 static void
 input(void)
 {
+	PRINTF("Rime: reached input\n");
   struct rime_sniffer *s;
   struct channel *c;
 
@@ -111,11 +112,13 @@ input(void)
   
   for(s = list_head(sniffers); s != NULL; s = list_item_next(s)) {
     if(s->input_callback != NULL) {
+    	PRINTF("Rime: calling sniffers\n");
       s->input_callback();
     }
   }
   
   if(c != NULL) {
+	  PRINTF("Rime: calling abc_input\n");
     abc_input(c);
   }
 }

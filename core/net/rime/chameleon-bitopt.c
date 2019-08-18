@@ -37,7 +37,6 @@
  */
 
 #include "net/rime/chameleon.h"
-
 #include "net/rime/rime.h"
 
 #include <string.h>
@@ -62,7 +61,7 @@ struct bitopt_hdr {
 static const uint8_t bitmask[9] = { 0x00, 0x80, 0xc0, 0xe0, 0xf0,
 				 0xf8, 0xfc, 0xfe, 0xff };
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -336,7 +335,9 @@ unpack_header(void)
     PRINTF("chameleon-bitopt: too short packet\n");
     return NULL;
   }
+  PRINTF("Chameleon header %u %u\n",hdr->channel[1], hdr->channel[0]);
   c = channel_lookup((hdr->channel[1] << 8) + hdr->channel[0]);
+  PRINTF("Chameleon channel number %u\n", c->channelno);
   if(c == NULL) {
     PRINTF("chameleon-bitopt: input: channel %u not found\n",
            (hdr->channel[1] << 8) + hdr->channel[0]);
@@ -345,6 +346,7 @@ unpack_header(void)
 
   hdrptr = packetbuf_dataptr();
   hdrbytesize = c->hdrsize / 8 + ((c->hdrsize & 7) == 0? 0: 1);
+  PRINTF("Chameleon: hdrbytesize %d\n", hdrbytesize);
   if(packetbuf_hdrreduce(hdrbytesize) == 0) {
     PRINTF("chameleon-bitopt: too short packet\n");
     return NULL;

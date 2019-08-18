@@ -133,7 +133,7 @@ send_packet(mac_callback_t sent, void *ptr)
 static void
 packet_input(void)
 {
-	if ((packetbuf_holds_broadcast() && strcmp((char *) packetbuf_dataptr, "TDMABeacon")) &&
+	if ((packetbuf_holds_broadcast() && strcmp((char *) packetbuf_dataptr(), "TDMABeacon")) &&
 			linkaddr_cmp(&beacon_node, packetbuf_addr(PACKETBUF_ADDR_SENDER)))
 
 	{

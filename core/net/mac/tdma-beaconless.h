@@ -11,7 +11,7 @@
 #include "net/mac/mac.h"
 #include "dev/radio.h"
 
-extern const struct mac_driver beaconlessTDMS_driver;
+extern const struct mac_driver beaconlessTDMA_driver;
 
 
 #endif /* Beaconless TDMA */

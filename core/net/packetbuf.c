@@ -63,7 +63,7 @@ static uint8_t hdrlen;
 static uint32_t packetbuf_aligned[(PACKETBUF_SIZE + 3) / 4];
 static uint8_t *packetbuf = (uint8_t *)packetbuf_aligned;
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -138,6 +138,7 @@ packetbuf_hdralloc(int size)
 int
 packetbuf_hdrreduce(int size)
 {
+	PRINTF("Buflen %u Size %u\n", buflen, size);
   if(buflen < size) {
     return 0;
   }
