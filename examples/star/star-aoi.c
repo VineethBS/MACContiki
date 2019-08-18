@@ -25,6 +25,7 @@
 
 static struct payload {
 	unsigned int packet_counter;
+	unsigned long dummy[10];
 };
 
 /*---------------------------------------------------------------------------*/
