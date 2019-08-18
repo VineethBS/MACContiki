@@ -7,6 +7,7 @@
  */
 
 #include "net/rime/rime.h"
+#include "net/queuebuf.h"
 #include "net/mac/nullmac.h"
 #include "net/netstack.h"
 #include "net/ip/uip.h"
@@ -14,6 +15,7 @@
 #include "net/packetbuf.h"
 #include "net/netstack.h"
 #include "sys/ctimer.h"
+#include "sys/rtimer.h"
 #include "sys/clock.h"
 #include "lib/random.h"
 
@@ -26,81 +28,116 @@
 #define PRINTF(...)
 #endif /* DEBUG */
 
-/* TDMA configuration */
-#define NR_SLOTS 6
-#define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
-#define BACKOFF_MAX (SLOT_LENGTH/5)
-#define GUARD_PERIOD (SLOT_LENGTH/10)
-#define PERIOD_LENGTH CLOCK_SECOND
+/* Buffers for holding the packets ------------------------------------------*/
+#define NUM_PACKETS 1 // since we are considering LIFO
+static int packet_queued_flag;
+static struct queuebuf* queued_packet;
 
-#define MY_SLOT (linkaddr_node_addr.u8[0] % NR_SLOTS)
+/* ZMAC backoff configuration */
+#define BACKOFF_TIME RTIMER_SECOND/CLOCK_SECOND * 2
+
+/* TDMA configuration */
+#define NR_SLOTS 6UL
+// #define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
+#define SLOT_LENGTH 10UL
+#define GUARD_PERIOD 1UL
+#define PRE_GUARD_PERIOD 1UL
+#define PERIOD_LENGTH 60UL
+
+#define MY_SLOT ((linkaddr_node_addr.u8[0] - 1) % NR_SLOTS)
 
 static struct ctimer slot_timer;
+uint8_t timer_on = 0;
 
 /*---------------------------------------------------------------------------*/
-static struct send_packet_data {
-	struct ctimer slot_timer;
-	clock_time_t slot_start;
-	mac_callback_t sent;
-	void *ptr;
-} p;
-
 static void
-_send_packet(void *ptr)
+transmit_packet(void *ptr)
 {
-	PRINTF("Beaconless ZMAC : transmitting at %u\n", (unsigned) clock_time());
-	struct send_packet_data *d = ptr;
-	NETSTACK_RDC.send(d->sent, d->ptr);
-}
+	clock_time_t now, rest, period_start, slot_start;
 
-static void
-_zmac_csma(void *ptr)
-{
-	struct send_packet_data *d = ptr;
-
-	if (NETSTACK_RADIO.channel_clear()) {
-		PRINTF("Channel is clear : transmitting at %u\n", (unsigned) clock_time());
-		NETSTACK_RDC.send(d->sent, d->ptr);
-	} else {
-		PRINTF("Channel is not clear\n");
-		PRINTF("TIMER Rescheduling until %lu\n", d->slot_start);
-		ctimer_set(&d->slot_timer, d->slot_start, _send_packet, &d);
-	}
-}
-
-static void
-send_packet(mac_callback_t sent, void *ptr)
-{
-	clock_time_t now, rest, period_start, slot_start, backoff_delay;
-
-	p.sent = sent;
-	p.ptr = ptr;
-
-	/* Calculate slot start time */
+	rtimer_clock_t backoff, backoff_start;
 	now = clock_time();
 	rest = now % PERIOD_LENGTH;
 	period_start = now - rest;
 	slot_start = period_start + MY_SLOT*SLOT_LENGTH;
+	PRINTF("%d,%lu,%lu,%lu,%lu\n",packet_queued_flag, now,rest,period_start,slot_start);
 
 	/* Check if we are inside our slot */
 	if(now < slot_start || now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
 		PRINTF("TIMER We are outside our slot: %lu != [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
-		while(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			slot_start += PERIOD_LENGTH;
+		// CSMA here
+		if (packet_queued_flag) {
+			backoff = random_rand() % (BACKOFF_TIME);
+			backoff_start = RTIMER_NOW();
+			PRINTF("Backing off %u\n", backoff);
+			while (RTIMER_NOW() < backoff_start + backoff) {} // wait for the backoff here
+			PRINTF("receiving packet %u\n", NETSTACK_RADIO.channel_clear());
+			if (NETSTACK_RADIO.channel_clear()) {
+				queuebuf_to_packetbuf(queued_packet);
+				PRINTF("TIMER in non-owner slot and transmitting\n");
+				NETSTACK_RDC.send(NULL, NULL);
+				packet_queued_flag = 0;
+			}
+			PRINTF("TIMER Rescheduling until next slot at %lu\n", SLOT_LENGTH);
+			ctimer_set(&slot_timer, SLOT_LENGTH, transmit_packet, NULL);
+			return;
 		}
-		// Backoff & Channel check - if channel busy then reschedule
-		PRINTF("ZMAC Backing off since not owner of slot\n");
-		backoff_delay = random_rand() % BACKOFF_MAX;
-		ctimer_set(&slot_timer, backoff_delay, _zmac_csma, &p);
-	} else {
-		if(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			PRINTF("TIMER No more time to transmit\n");
+		// If packet is not queued or could not get the channel
+		if ((now >= slot_start - PRE_GUARD_PERIOD) && (now < slot_start + SLOT_LENGTH - GUARD_PERIOD)) {
+			while (clock_time() < slot_start) {} // just wait for the slot
 		} else {
-			PRINTF("TIMER Inside slot: %lu == [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
-			NETSTACK_RDC.send(sent, ptr);
+			PRINTF("TIMER Rescheduling until next slot at %lu\n", SLOT_LENGTH);
+			ctimer_set(&slot_timer, SLOT_LENGTH, transmit_packet, NULL);
+			return;
 		}
 	}
+
+	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+		PRINTF("TIMER No more time to transmit\n");
+	} else {
+		if (packet_queued_flag) {
+			queuebuf_to_packetbuf(queued_packet);
+			PRINTF("TIMER In slot and transmitting\n");
+			NETSTACK_RDC.send(NULL, NULL);
+			packet_queued_flag = 0;
+		}
+	}
+	ctimer_set(&slot_timer, SLOT_LENGTH, transmit_packet, NULL);
 }
+
+static struct send_packet_data {
+	mac_callback_t sent;
+	void *ptr;
+} p;
+
+/*---------------------------------------------------------------------------*/
+static void
+send_packet(mac_callback_t sent, void *ptr)
+{
+	p.sent = sent;
+	p.ptr = ptr;
+	// Step 1: Cleanup the queuebuf
+	if (packet_queued_flag) {
+		queuebuf_free(queued_packet);
+		packet_queued_flag = 0;
+	}
+	// Step 2: Copy the packetbuf to the queued packet
+	queued_packet = queuebuf_new_from_packetbuf();
+	if (queued_packet == NULL) {
+		packet_queued_flag = 0;
+		sent(ptr, MAC_TX_ERR, 1);
+	}
+	packet_queued_flag = 1;
+	// Step 3: Start transmission
+	if (!timer_on)
+	{
+		PRINTF("TIMER Starting TDMA timer at %lu\n", SLOT_LENGTH);
+		ctimer_set(&slot_timer, SLOT_LENGTH, transmit_packet, NULL);
+		timer_on = 1;
+	}
+	// sent(ptr, MAC_TX_DEFERRED, 1);
+}
+
 /*---------------------------------------------------------------------------*/
 static void
 packet_input(void)
