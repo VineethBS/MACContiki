@@ -266,6 +266,7 @@ static void
 packet_input(void)
 {
 	PRINTF("RDC here\n");
+	PRINTF("%u %u %u\n", NULLRDC_SEND_802154_ACK,NULLRDC_802154_AUTOACK,NULLRDC_802154_AUTOACK_HW);
 #if NULLRDC_SEND_802154_ACK
 	int original_datalen;
 	uint8_t *original_dataptr;
@@ -307,6 +308,7 @@ packet_input(void)
 
 #if NULLRDC_SEND_802154_ACK
 			{
+				PRINT("Framer ACK\n");
 				frame802154_t info154;
 				frame802154_parse(original_dataptr, original_datalen, &info154);
 				if(info154.fcf.frame_type == FRAME802154_DATAFRAME &&

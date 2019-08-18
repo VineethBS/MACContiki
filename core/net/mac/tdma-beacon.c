@@ -65,10 +65,12 @@ clock_time_t last_beacon_receive_time;
 linkaddr_t beacon_node;
 
 /* TDMA configuration */
-#define NR_SLOTS 6
-#define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
-#define GUARD_PERIOD (CLOCK_SECOND/NR_SLOTS/10)
-#define PERIOD_LENGTH CLOCK_SECOND
+#define NR_SLOTS 6UL
+// #define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
+#define SLOT_LENGTH 2UL
+#define GUARD_PERIOD 0UL
+#define PRE_GUARD_PERIOD 1UL
+#define PERIOD_LENGTH 12UL
 
 #define MY_SLOT ((linkaddr_node_addr.u8[0] - 1) % NR_SLOTS)
 
@@ -84,6 +86,7 @@ static struct send_packet_data {
 static void
 transmit_packet(void *ptr)
 {
+	PRINTF("Timer: %lu\n",clock_time());
 	clock_time_t now, rest, period_start, slot_start;
 
 	now = clock_time();
@@ -103,17 +106,21 @@ transmit_packet(void *ptr)
 
 	period_start = now - rest;
 	slot_start = period_start + MY_SLOT*SLOT_LENGTH;
-	PRINTF("%lu,%lu,%lu,%lu\n",now,rest,period_start,slot_start);
+	PRINTF("%d,%lu,%lu,%lu,%lu\n",packet_queued_flag, now,rest,period_start,slot_start);
 
 	/* Check if we are inside our slot */
 	if(now < slot_start || now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
 		PRINTF("TIMER We are outside our slot: %lu != [%lu,%lu]\n", now, slot_start, slot_start + SLOT_LENGTH);
-		while(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			slot_start += PERIOD_LENGTH;
+		if ((now >= slot_start - PRE_GUARD_PERIOD) && (now < slot_start + SLOT_LENGTH - GUARD_PERIOD)) {
+			while (clock_time() < slot_start) {} // just wait for the slot
+		} else {
+			while(now > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+				slot_start += PERIOD_LENGTH;
+			}
+			PRINTF("TIMER Rescheduling until %lu\n", slot_start);
+			ctimer_set(&slot_timer, slot_start - clock_time(), transmit_packet, NULL);
+			return;
 		}
-		PRINTF("TIMER Rescheduling until %lu\n", slot_start);
-		ctimer_set(&slot_timer, slot_start - clock_time(), transmit_packet, NULL);
-		return;
 	}
 
 	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
@@ -123,6 +130,7 @@ transmit_packet(void *ptr)
 			queuebuf_to_packetbuf(queued_packet);
 			PRINTF("TIMER In slot and transmitting\n");
 			NETSTACK_RDC.send(NULL, NULL);
+			packet_queued_flag = 0;
 		}
 	}
 	slot_start += PERIOD_LENGTH;
@@ -135,7 +143,6 @@ send_packet(mac_callback_t sent, void *ptr)
 {
 	p.sent = sent;
 	p.ptr = ptr;
-
 	// Step 1: Cleanup the queuebuf
 	if (packet_queued_flag) {
 		queuebuf_free(queued_packet);
@@ -151,11 +158,11 @@ send_packet(mac_callback_t sent, void *ptr)
 	// Step 3: Start transmission
 	if (!timer_on)
 	  {
-	    PRINTF("TIMER Starting TDMA timer\n");
+	    PRINTF("TIMER Starting TDMA timer at %lu\n", SLOT_LENGTH);
 	    ctimer_set(&slot_timer, SLOT_LENGTH, transmit_packet, NULL);
 	    timer_on = 1;
 	  }
-	sent(ptr, MAC_TX_DEFERRED, 1);
+	// sent(ptr, MAC_TX_DEFERRED, 1);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -170,6 +177,7 @@ packet_input(void)
 		last_beacon_receive_time = clock_time();
 		PRINTF("TDMA Beacon: Received TDMA Beacon, setting receive time to %lu\n", last_beacon_receive_time);
 	} else {
+		PRINTF("LLSec input\n");
 		NETSTACK_LLSEC.input();
 	}
 }

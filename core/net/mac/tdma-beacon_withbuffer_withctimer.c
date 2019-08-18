@@ -212,8 +212,8 @@ init(void)
 }
 
 /*---------------------------------------------------------------------------*/
-const struct mac_driver beaconTDMA_driver = {
-		"TDMA with Beacon",
+const struct mac_driver beaconTDMA_withbeacon_withctimer_driver = {
+		"TDMA with Beacon, Buffer, Ctimer",
 		init,
 		send_packet,
 		packet_input,

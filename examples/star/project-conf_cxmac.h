@@ -6,3 +6,4 @@
 // #define NETSTACK_CONF_FRAMER framer_nullmac
 #define NETSTACK_CONF_MAC csma_driver
 #define NETSTACK_CONF_RDC cxmac_driver
+#define NETSTACK_CONF_FRAMER framer_802154
