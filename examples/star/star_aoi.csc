@@ -171,7 +171,7 @@
       <viewport>3.683751831855967 0.0 0.0 3.683751831855967 53.064341466860256 -6.081545916330475</viewport>
     </plugin_config>
     <width>400</width>
-    <z>4</z>
+    <z>3</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -179,7 +179,7 @@
   <plugin>
     org.contikios.cooja.plugins.LogListener
     <plugin_config>
-      <filter>ID:2</filter>
+      <filter />
       <formatted_time />
       <coloring />
     </plugin_config>
@@ -204,7 +204,7 @@
       <zoomfactor>500.0</zoomfactor>
     </plugin_config>
     <width>1161</width>
-    <z>3</z>
+    <z>2</z>
     <height>279</height>
     <location_x>5</location_x>
     <location_y>411</location_y>
@@ -216,24 +216,10 @@
       <decorations>true</decorations>
     </plugin_config>
     <width>486</width>
-    <z>5</z>
+    <z>4</z>
     <height>160</height>
     <location_x>680</location_x>
     <location_y>0</location_y>
-  </plugin>
-  <plugin>
-    org.contikios.cooja.plugins.RadioLogger
-    <plugin_config>
-      <split>336</split>
-      <formatted_time />
-      <showdups>false</showdups>
-      <hidenodests>false</hidenodests>
-    </plugin_config>
-    <width>1166</width>
-    <z>2</z>
-    <height>699</height>
-    <location_x>35</location_x>
-    <location_y>441</location_y>
   </plugin>
 </simconf>
 
