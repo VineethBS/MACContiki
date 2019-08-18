@@ -1070,6 +1070,7 @@ cc2420_cca(void)
      being invoked through an interrupt), we preted that the coast is
      clear (i.e., no packet is currently being transmitted by a
      neighbor). */
+
   if(locked) {
     return 1;
   }

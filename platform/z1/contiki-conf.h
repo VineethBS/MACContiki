@@ -131,7 +131,8 @@
 #endif /* CC2420_CONF_CHANNEL */
 
 #ifndef CC2420_CONF_CCA_THRESH
-#define CC2420_CONF_CCA_THRESH            -45
+// #define CC2420_CONF_CCA_THRESH            -45
+#define CC2420_CONF_CCA_THRESH            -90
 #endif /* CC2420_CONF_CCA_THRESH */
 
 #ifndef IEEE802154_CONF_PANID
