@@ -69,7 +69,7 @@ PROCESS_THREAD(mac_star, ev, data)
 	while(1) {
 		static struct etimer et;
 		linkaddr_t addr;
-		etimer_set(&et, RATE1);
+		etimer_set(&et, RATE12);
 
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 		printf("Packet counter %u\n", pkt_ctr.packet_counter);

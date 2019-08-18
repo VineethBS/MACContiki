@@ -7,6 +7,7 @@
  */
 
 #include "net/rime/rime.h"
+#include "net/queuebuf.h"
 #include "net/mac/nullmac.h"
 #include "net/netstack.h"
 #include "net/ip/uip.h"
@@ -25,6 +26,11 @@
 #else /* DEBUG */
 #define PRINTF(...)
 #endif /* DEBUG */
+
+/* Buffers for holding the packets ------------------------------------------*/
+#define NUM_PACKETS 1 // since we are considering LIFO
+static int packet_queued_flag;
+static struct queuebuf* queued_packet;
 
 /*---------------------------------------------------------------------------*/
 /* TDMA beacon generation for the COORDINATOR NODE */
@@ -67,6 +73,7 @@ linkaddr_t beacon_node;
 #define MY_SLOT ((linkaddr_node_addr.u8[0] - 1) % NR_SLOTS)
 
 static struct ctimer slot_timer;
+uint8_t timer_on = 0;
 
 /*---------------------------------------------------------------------------*/
 static struct send_packet_data {
@@ -75,20 +82,9 @@ static struct send_packet_data {
 } p;
 
 static void
-_send_packet(void *ptr)
-{
-	PRINTF("Beaconed TDMA : transmitting at %u\n", (unsigned) clock_time());
-	struct send_packet_data *d = ptr;
-	NETSTACK_RDC.send(d->sent, d->ptr);
-}
-
-static void
-send_packet(mac_callback_t sent, void *ptr)
+transmit_packet(void *ptr)
 {
 	clock_time_t now, rest, period_start, slot_start;
-
-	p.sent = sent;
-	p.ptr = ptr;
 
 	now = clock_time();
 	if (beacon_received_flag == BEACON_NOT_RECEIVED) {
@@ -116,19 +112,52 @@ send_packet(mac_callback_t sent, void *ptr)
 			slot_start += PERIOD_LENGTH;
 		}
 		PRINTF("TIMER Rescheduling until %lu\n", slot_start);
-		ctimer_set(&slot_timer, slot_start - clock_time(), _send_packet, &p);
+		ctimer_set(&slot_timer, slot_start - clock_time(), transmit_packet, NULL);
+		return;
+	}
+
+	if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
+		PRINTF("TIMER No more time to transmit\n");
 	} else {
-		if(clock_time() > slot_start + SLOT_LENGTH - GUARD_PERIOD) {
-			PRINTF("TIMER No more time to transmit\n");
-			slot_start += PERIOD_LENGTH;
-			ctimer_set(&slot_timer, slot_start - clock_time(), _send_packet, &p);
-		} else {
+		if (packet_queued_flag) {
+			queuebuf_to_packetbuf(queued_packet);
 			PRINTF("TIMER In slot and transmitting\n");
-			NETSTACK_RDC.send(sent, ptr);
+			NETSTACK_RDC.send(NULL, NULL);
 		}
 	}
+	slot_start += PERIOD_LENGTH;
+	ctimer_set(&slot_timer, slot_start - clock_time(), transmit_packet, NULL);
+}
+
+/*---------------------------------------------------------------------------*/
+static void
+send_packet(mac_callback_t sent, void *ptr)
+{
+	p.sent = sent;
+	p.ptr = ptr;
+
+	// Step 1: Cleanup the queuebuf
+	if (packet_queued_flag) {
+		queuebuf_free(queued_packet);
+		packet_queued_flag = 0;
+	}
+	// Step 2: Copy the packetbuf to the queued packet
+	queued_packet = queuebuf_new_from_packetbuf();
+	if (queued_packet == NULL) {
+		packet_queued_flag = 0;
+		sent(ptr, MAC_TX_ERR, 1);
+	}
+	packet_queued_flag = 1;
+	// Step 3: Start transmission
+	if (!timer_on)
+	  {
+	    PRINTF("TIMER Starting TDMA timer\n");
+	    ctimer_set(&slot_timer, SLOT_LENGTH, transmit_packet, NULL);
+	    timer_on = 1;
+	  }
 	sent(ptr, MAC_TX_DEFERRED, 1);
 }
+
 /*---------------------------------------------------------------------------*/
 static void
 packet_input(void)
@@ -167,6 +196,8 @@ channel_check_interval(void)
 static void
 init(void)
 {
+	packet_queued_flag = 0; // no packets queued when we start
+
 	beacon_node.u8[0] = 1;
 	beacon_node.u8[1] = 0;
 
