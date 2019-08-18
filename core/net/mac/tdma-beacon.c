@@ -65,7 +65,7 @@ clock_time_t last_beacon_receive_time;
 linkaddr_t beacon_node;
 
 /* TDMA configuration */
-#define NR_SLOTS 16
+#define NR_SLOTS 6
 #define SLOT_LENGTH (CLOCK_SECOND/NR_SLOTS)
 #define GUARD_PERIOD (CLOCK_SECOND/NR_SLOTS/10)
 #define PERIOD_LENGTH CLOCK_SECOND
@@ -170,7 +170,6 @@ packet_input(void)
 		last_beacon_receive_time = clock_time();
 		PRINTF("TDMA Beacon: Received TDMA Beacon, setting receive time to %lu\n", last_beacon_receive_time);
 	} else {
-		PRINTF("Sending to LLSEC\n");
 		NETSTACK_LLSEC.input();
 	}
 }
